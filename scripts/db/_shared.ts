@@ -46,14 +46,14 @@ export function makePool(url: string): Pool {
 }
 
 export const EXPECTED_DB = {
-  serverMajor: 18,
-  extensions: { vector: ["0.8.7", "0.8.6"], pg_trgm: ["1.6"], pgcrypto: ["1.4"] } as Record<string, readonly string[]>,
+  serverMajors: [18, 17] as readonly number[],
+  extensions: { vector: ["0.8.7", "0.8.6", "0.8.2"], pg_trgm: ["1.6"], pgcrypto: ["1.4", "1.3"] } as Record<string, readonly string[]>,
 } as const;
 
 export function assertDbVersions(serverVersionNum: number, extensions: Record<string, string>): void {
   const problems: string[] = [];
   const major = Math.floor(serverVersionNum / 10000);
-  if (major !== EXPECTED_DB.serverMajor) problems.push(`PostgreSQL ${major} (expected ${EXPECTED_DB.serverMajor})`);
+  if (!EXPECTED_DB.serverMajors.includes(major)) problems.push(`PostgreSQL ${major} (expected ${EXPECTED_DB.serverMajors.join(" or ")})`);
   for (const [name, versions] of Object.entries(EXPECTED_DB.extensions)) {
     const got = extensions[name];
     if (got === undefined || !versions.includes(got)) problems.push(`${name} ${got ?? "missing"} (expected ${versions.join(" or ")})`);
