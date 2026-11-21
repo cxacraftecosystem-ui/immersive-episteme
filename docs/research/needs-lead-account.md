@@ -1,4 +1,9 @@
-# Items That Need The Lead's Account Or Payment
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/users.svg" width="32" align="top" alt="">&nbsp; Items That Need The Lead's Account Or Payment
 
 These would most improve realism and cannot be downloaded without a login or payment. Nothing here has been acquired. Only the lead creates an account or buys. Listing and asset details are in `docs/research/asset-candidates.json`; none of these objects is a craft claim, and every one is a stand-in until a curator accepts it.
 

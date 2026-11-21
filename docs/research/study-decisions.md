@@ -1,4 +1,9 @@
-# Study decisions
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/flask-conical.svg" width="32" align="top" alt="">&nbsp; Study decisions
 
 Decisions on the open study parameters the concept note leaves to the researchers. The project
 lead asked the build team to "TAKE the best decisions possible after you have thorougly

@@ -1,8 +1,36 @@
-# Deployment research: Vercel with AWS, or with Neon and Cloudflare R2
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/search.svg" width="32" align="top" alt="">&nbsp; Deployment research: Vercel with AWS, or with Neon and Cloudflare R2
 
 Research for deploying Immersive Episteme to Vercel (app) and lean AWS in `ap-south-1` (RDS PostgreSQL `db.t4g.micro` Single-AZ, one private S3 bucket, one IAM role or key-only IAM user, one AWS Budget). Nothing here was deployed or changed on any platform.
 
 **Two data options, the deployer chooses (DR-055).** Sections 1 to 17 cover Option A (AWS: RDS and S3 in `ap-south-1`, functions in `bom1`). The addendum at the end covers Option B (Neon in `aws-ap-southeast-1` and Cloudflare R2, functions in `sin1`). The deploy kit detects either from the production env file (`scripts/deploy/lib/topology.ts`), and `docs/deploy/RUNBOOK.md` gives both routes.
+
+How a request reaches the database and the media in each option (§6 to §10, N§2, N§7); the dashed lines are browser uploads, which never pass through a function:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  subgraph OA["Option A: AWS, Mumbai"]
+    BA["Browser"] --> FA["Vercel function<br/>bom1"]
+    FA -->|"pool and LISTEN"| RDS[("RDS PostgreSQL<br/>ap-south-1")]
+    FA -->|"figure reads"| S3A[("S3 bucket<br/>ap-south-1")]
+    BA -.->|"presigned PUT"| S3A
+  end
+  subgraph OB["Option B: Neon and R2"]
+    BB["Browser"] --> FB["Vercel function<br/>sin1"]
+    FB -->|pool| PGB["Neon pooler<br/>PgBouncer"]
+    PGB --> NC[("Neon compute<br/>aws-ap-southeast-1")]
+    FB -->|"LISTEN, direct"| NC
+    FB -->|"figure reads"| R2[("R2 bucket<br/>region auto")]
+    BB -.->|"presigned PUT"| R2
+  end
+  classDef gold fill:#FAEECD,stroke:#CD9200,color:#1E1B2E
+  class BA,BB,RDS,S3A,PGB,NC,R2 gold
+```
 
 **Method.** Every platform fact below is quoted verbatim from the official page named next to it (vercel.com/docs and vercel.com/kb, docs.aws.amazon.com, and the Next.js 16.4.0 docs shipped in `node_modules/next/dist/docs/`). Pages were read on 2026-10-16; the `last_updated` date that Vercel prints on each page is given where it exists. Statements marked **Measured** were checked in this repo or with a read-only download. Statements marked **Inference** are our reading of the quotes, not a documented fact.
 

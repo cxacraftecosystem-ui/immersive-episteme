@@ -1,4 +1,9 @@
-# Knowledge-graph validation and content snapshots
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/badge-check.svg" width="32" align="top" alt="">&nbsp; Knowledge-graph validation and content snapshots
 
 - **Status:** implemented
 - **Code:** `src/features/knowledge/graph/` (pure TypeScript; `hash-node.ts` and
@@ -16,11 +21,21 @@ ever changes a verification state. Interchange content arrives as `under_review`
 
 ## Pipeline
 
-```
-content/*.json ──loader──▶ KnowledgeGraphModel ──validators──▶ IntegrityIssue[] ──▶ report (JSON + markdown)
-                  │ contentPackageFileSchema (KG100)                    │
-                  │ source-id resolution (KG410)                        ▼
-                  └──────────────────────────────────────────▶ buildSnapshot(kind) ──▶ envelope + bundle (+ JSON-LD)
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  F["content/*.json"] --> LD["Loader<br/>file schema, source ids"]
+  LD --> M["KnowledgeGraphModel"]
+  LD -->|file issues| I["IntegrityIssue[]"]
+  M --> V["Validators<br/>validate.ts"]
+  V --> I
+  I --> R["Report<br/>JSON and markdown"]
+  M --> BS["buildSnapshot(kind)"]
+  I --> BS
+  BS --> E["Envelope and bundle"]
+  E -.->|optional| J["JSON-LD"]
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  class M accent
 ```
 
 - **Loader** (`loader.ts`): validates each file with the canonical
@@ -129,10 +144,37 @@ every issue).
 | `review` | true | any error-level issue (SNAP001) or demo content (SNAP004) |
 | `publishable` | false | any of the above, or any tradition, concept, relationship or source that is not `verified` or `published` (SNAP002) |
 
-An invalid bundle is refused with SNAP003. Interchange files cannot carry accepted states, so
-`content/` alone can never produce a publishable snapshot. That is intentional. A review
+An invalid bundle is refused with SNAP003. The loader reads an interchange file's `verified` as
+`under_review` (`importedState`), so `content/` alone can never produce a publishable snapshot.
+That is intentional. A review
 snapshot is labelled in its `notice`: "REVIEW SNAPSHOT … not publishable, and not for use in a
 study". Its default label is `review-<12 hex>`.
+
+Where each build reads from and where it goes: the CLI writes files, `npm run content:import`
+and the CMS store review snapshots built from the database
+(`src/server/content/review-snapshot.ts`), and only a CMS release, after curators have
+verified the content, stores a publishable one (`publishRelease` in `src/server/cms/release.ts`):
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  subgraph cli ["build-snapshot.ts CLI"]
+    C1["content/*.json"] --> C2["buildSnapshot<br/>review or publishable"]
+  end
+  subgraph imp ["content:import, CMS rebuild"]
+    I1["loadModelFromDb<br/>validateGraph"] --> I2["buildSnapshot<br/>review"]
+  end
+  subgraph rel ["CMS release"]
+    R0["Promote verified<br/>to published"] --> R1["loadModelFromDb<br/>validateGraph"] --> R2["buildSnapshot<br/>publishable"]
+  end
+  C2 --> F["analysis/out<br/>JSON and JSON-LD"]
+  I2 --> S1[("content_snapshots<br/>review, draft")]
+  R2 --> S2[("content_snapshots<br/>release, published")]
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  classDef gold fill:#FAEECD,stroke:#CD9200,color:#1E1B2E
+  class R2 accent
+  class S1,S2 gold
+```
 
 **Bundle mapping.** Traditions are the tradition files. A tradition's `verificationState` is
 the state of its `tradition` concept, since FORMAT v1 has no file-level state. Sources come

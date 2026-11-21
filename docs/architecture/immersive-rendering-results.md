@@ -1,4 +1,9 @@
-# Immersive rendering: measured results
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/chart-column.svg" width="32" align="top" alt="">&nbsp; Immersive rendering: measured results
 
 > **Superseded, 2026-11-08 (DR-124).** This records the deleted 3D museum (DR-076 deleted the old doors; DR-118 replaced the image gate). Its checks, statuses and CSP finding describe that build, not the current Door 2 walkthrough, whose measurements are in the DRs from DR-095 on (DR-106, DR-109, DR-117). Kept as history.
 

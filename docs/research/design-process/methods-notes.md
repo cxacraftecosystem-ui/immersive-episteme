@@ -1,4 +1,9 @@
-# Methods notes (draft material for the paper)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../readme-kit/assets/divider-dark.svg">
+  <img src="../../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../../readme-kit/assets/icons/notebook-pen.svg" width="32" align="top" alt="">&nbsp; Methods notes (draft material for the paper)
 
 Draft text for the methods and system-design sections. Every number is traceable to
 the file in brackets. Update these notes when a number changes.

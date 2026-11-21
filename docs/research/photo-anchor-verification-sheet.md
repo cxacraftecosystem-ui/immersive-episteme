@@ -1,4 +1,9 @@
-# Photo Anchor Concepts: Verification Sheet for Curators
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/camera.svg" width="32" align="top" alt="">&nbsp; Photo Anchor Concepts: Verification Sheet for Curators
 
 This sheet is for the curator (Ankit Kumar or Priyadarshi Patnaik) who verifies the six concepts the study photographs anchor to, in the CMS: concept page → Transition panel → Verify.
 

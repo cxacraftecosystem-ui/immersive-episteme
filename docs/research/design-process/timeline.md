@@ -1,4 +1,9 @@
-# Sequence of design steps
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../readme-kit/assets/divider-dark.svg">
+  <img src="../../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../../readme-kit/assets/icons/git-branch.svg" width="32" align="top" alt="">&nbsp; Sequence of design steps
 
 In order of occurrence. "Lead" is the project lead. Commits are on branch `main`.
 

@@ -1,4 +1,9 @@
-# Concept-map scoring: definitions, matching rules and open questions
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/network.svg" width="32" align="top" alt="">&nbsp; Concept-map scoring: definitions, matching rules and open questions
 
 - **Status:** engineering draft for researcher review. None of the defaults below is a study decision.
 - **Code:** `src/features/assessment/scoring/` (pure TypeScript). **Tests:** `tests/unit/assessment-scoring/`.
@@ -81,6 +86,29 @@ counted.
 | `wrong_direction` | Best match is at uu: the pair is right, but the direction or directedness is wrong. |
 | `unsupported` | The pair does not appear in the reference at all. |
 | `out_of_scope`, `duplicate` | See §3. |
+
+The scorer gives each participant edge one class in this order (`prepareParticipant` and `classify`
+in `src/features/assessment/scoring/match.ts`, `canonicaliseEdge` in `canonical.ts`). The scope check
+comes first in the code: it reads only the two concept ids, which normalisation can only swap.
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  PE["Participant edge"] --> SC{"In scope?"}
+  SC -->|no| OS["out_of_scope"]
+  SC -->|yes| CA["Canonical edge<br/>synonyms, direction"]
+  CA --> DU{"First edge with<br/>this dl key?"}
+  DU -->|no| DP["duplicate"]
+  DU -->|yes| HM{"Highest<br/>match level"}
+  HM -->|dl| EX{"Expected edge<br/>among matches?"}
+  EX -->|yes| CO["correct"]
+  EX -->|no| OM["optional_match"]
+  HM -->|du| WT["wrong_type"]
+  HM -->|uu| WD["wrong_direction"]
+  HM -->|none| UN["unsupported"]
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  class CO accent
+```
 
 **Validity** is judged at `validityLevel` (default dl).
 

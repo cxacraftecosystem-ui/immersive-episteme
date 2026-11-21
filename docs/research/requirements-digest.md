@@ -1,4 +1,9 @@
-# Research requirements digest: Immersive Episteme (Paper 1)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/file-text.svg" width="32" align="top" alt="">&nbsp; Research requirements digest: Immersive Episteme (Paper 1)
 
 Status: engineering digest, 2026-10-14. This digest restates the research documents. It does not replace them.
 Where a citation and this digest disagree, the source wins.

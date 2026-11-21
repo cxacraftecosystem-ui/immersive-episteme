@@ -1,4 +1,9 @@
-# Deployment Runbook: Handover to Ankit
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/rocket.svg" width="32" align="top" alt="">&nbsp; Deployment Runbook: Handover to Ankit
 
 This runbook takes Immersive Episteme from "code on `main`" (the deploy kit, the production data path and the concept verification runner, all merged) to "live, invite-only, with the first staff account, the public demo museum and invite codes". It is written for Ankit, who deploys. Read it once end to end before starting.
 
@@ -9,6 +14,36 @@ This runbook takes Immersive Episteme from "code on `main`" (the deploy kit, the
 - Never paste a secret into chat, a ticket, a commit or a document. Secrets live in one file outside the repository (step 3.1) and in Vercel as Secret variables.
 - Signing in to a CLI is interactive: type it yourself (in Claude Code, prefix it with `!`).
 - All commands run from the repository root, on the commit being deployed, with Node 24 on the PATH (`package.json` `engines.node` is `"24.x"`).
+
+The order of a first deployment, by section (the production data of section 5 goes in before the first deploy, step 4.4):
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  subgraph Prep["Prepare"]
+    direction TB
+    S0["0, 1 Data location<br/>and option"] --> S2["2 Accounts and<br/>resources"] --> S31["3 Env file"]
+  end
+  subgraph Kit["Check and push"]
+    direction TB
+    S41["4.1 Preflight"] --> S11["1.1 Function region<br/>committed"] --> S42["4.2 Vercel link"] --> S43["4.3 Env push"]
+  end
+  subgraph ProdData["Production data"]
+    direction TB
+    S51["5.1 Migrations"] --> S52["5.2 Reference data"] --> S53["5.3 Demo museum"]
+  end
+  subgraph GoLive["Go live"]
+    direction TB
+    S44["4.4 Deploy"] --> S45["4.5 Smoke test"]
+  end
+  subgraph OpenUp["Open up"]
+    direction TB
+    S61["6.1 First staff<br/>account"] --> S62["6.2 Invite codes"] --> S7["7 Verification<br/>and photos"] --> S8["8 Backups"]
+  end
+  Prep --> Kit --> ProdData --> GoLive --> OpenUp
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  class S0 accent
+```
 
 ---
 
@@ -41,7 +76,42 @@ This runbook takes Immersive Episteme from "code on `main`" (the deploy kit, the
 | Backups | RDS automated backups, 7 days, plus manual snapshots | **No real backups on Neon Free.** You run `pg_dump` on a schedule (step 8.2) |
 | Accounts needed | Vercel; the IIT AWS account (owner `cxa.craftecosystem@gmail.com`, ID `626159998512`) | Vercel; Neon; Cloudflare |
 | Effort | More setup (budget, parameter group, IAM, CA bundle) | Less setup |
-| Kit status | Ready; set `vercel.json` to `bom1` (step 1.1) | Ready; `vercel.json` already `sin1` (step 1.1) |
+| Kit status | Ready; `vercel.json` already `bom1` (step 1.1) | Ready; set `vercel.json` to `sin1` (step 1.1) |
+
+How preflight tells the options apart from the database host in the env file, and what each option's functions connect to (`scripts/deploy/lib/topology.ts`, `src/lib/env.ts`, `src/server/cms/media/storage.ts`):
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  E["Production env file<br/>DATABASE_URL host"] --> H{"Host and<br/>region"}
+  X["Preflight FAIL"]
+  subgraph OA["Option A: AWS, Mumbai"]
+    FA["Vercel functions<br/>bom1"]
+    RDS[("Amazon RDS<br/>ap-south-1")]
+    S3[("Amazon S3<br/>ap-south-1")]
+  end
+  subgraph OB["Option B: Neon, Singapore"]
+    FB["Vercel functions<br/>sin1"]
+    NP["Neon pooler"]
+    ND[("Neon PostgreSQL<br/>aws-ap-southeast-1")]
+    NOS[("Neon Object Storage<br/>tested, B4-N")]
+    R2[("Cloudflare R2<br/>untested, B4")]
+  end
+  H -->|"rds.amazonaws.com,<br/>ap-south-1"| FA
+  H -->|"neon.tech,<br/>ap-southeast-1"| FB
+  H -->|"any other"| X
+  FA -->|"DATABASE_URL + CA"| RDS
+  FA -->|"MEDIA_S3_*"| S3
+  FB -->|"DATABASE_URL"| NP
+  NP --> ND
+  FB -->|"DATABASE_URL_UNPOOLED"| ND
+  FB -->|"MEDIA_S3_*"| NOS
+  FB -.->|"or MEDIA_S3_*"| R2
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  classDef gold fill:#FAEECD,stroke:#CD9200,color:#1E1B2E
+  class E accent
+  class RDS,S3,NP,ND,NOS,R2 gold
+```
 
 ### 1.1 Set the Function Region From Preflight
 
@@ -52,7 +122,7 @@ Preflight reads the database host in the env file and prints the one Vercel regi
    npx tsx scripts/deploy/preflight.ts --env-file ~/.episteme/production.env
    ```
 2. Read the line `[preflight] this setup needs vercel.json "regions": ["<region>"]`.
-3. Set `vercel.json` to exactly that one value, `"regions": ["sin1"]` or `"regions": ["bom1"]` (the file has `["sin1"]` today, so Option B needs no change).
+3. Set `vercel.json` to exactly that one value, `"regions": ["sin1"]` or `"regions": ["bom1"]` (the file has `["bom1"]` today, so Option A needs no change).
 4. Commit it (`git commit -m "Function region <region> for the <Neon|RDS> database" vercel.json`), so the deployed commit and the `APP_BUILD_VERSION` SHA carry the region. Rerun preflight: the row `vercel.json regions = ["<region>"]` must PASS.
 
 If the line is missing, preflight could not derive a region (a database host that is neither `*.neon.tech` nor `*.rds.amazonaws.com`, or an AWS region with no entry in `FUNCTION_REGION_FOR`): stop and tell the lead. Without the right region every database round trip crosses between Singapore and Mumbai.
@@ -501,6 +571,37 @@ The site is **always invite-only**. Until a code exists, only signed-in staff ca
 
 What happens (`src/proxy.ts`): any gated URL with `?invite=<code>` redirects to `/invite` with the code filled in, so a link preview or prefetch redeems nothing (DR-129); pressing Continue checks the code, sets a signed, HttpOnly, Secure, SameSite=Lax cookie (valid 30 days) and goes on to the same URL without the code. A bad, expired, revoked or used-up code sets nothing and stays on `/invite`. Visitors without the cookie are redirected to `/invite`. On every page request the proxy checks the cookie's signature and then asks the database whether its code has been revoked, so revoking a code sends every browser that used it, including a participant part-way through a study, to `/invite` on its next page request, and the study and telemetry APIs refuse it with 403 (DR-114, DR-129). Staff pass by signing in and never need a code: the proxy confirms the session in the database and admits it only when the account holds a staff role. If the database cannot be reached the gate answers 503 rather than guessing. The gate sits before consent and allocation, identical in both conditions.
 
+A first visit from a participant link, as `src/proxy.ts`, the `/invite` page and `src/server/access` handle it:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+sequenceDiagram
+  autonumber
+  participant B as Browser
+  participant P as Proxy
+  participant I as Invite page
+  participant D as Database
+  B->>P: GET the study link with ?invite=CODE
+  Note over P: No live invite cookie<br/>and no staff session
+  P-->>B: Redirect to /invite, code filled in
+  Note over B,P: A preview or prefetch stops here
+  B->>I: Continue
+  I->>D: Count one use if the code is live
+  alt Bad, expired, revoked or used up
+    D-->>I: No row
+    I-->>B: Stay on /invite with an error
+  else Live code
+    D-->>I: Invite id
+    I-->>B: Signed cookie, redirect without code
+    B->>P: GET the study link
+    P->>P: Check the cookie signature
+    P->>D: Is the invite revoked?
+    D-->>P: Not revoked
+    P-->>B: Study page
+  end
+  Note over P,D: Checked on every page request.<br/>Revoked: back to /invite, APIs 403
+```
+
 **Check by hand in a private window:** no code → `/invite`; the link admits you; an expired or revoked code is refused; staff sign-in works without a code.
 
 **Before opening the study:** the data-location check in section 0 must be done.
@@ -565,6 +666,26 @@ Everything below is done in the console as a researcher or the principal investi
 Preconditions: 5.1 to 5.3 done; the first Admin (6.1) has given the Curator role to the curator accounts in **Admin → People** (at least two curators: nobody verifies their own upload, and the media verification is a second person). `scripts/content/verify-concepts.ts` is on `main` (merged from `prep-verify`).
 
 **Concept verification** (`scripts/content/verify-concepts.ts`): it calls the same `transition()` service the CMS review panel uses, so every rule the CMS enforces (permission `content.verify`, separation of duties, complete citations, state) applies, and the audit log records the named curator. It touches only the listed keys and refuses demo content. Given a content file, it also accepts the file's tradition and its sources (DR-133); a source the file marks `kind: "unverified"` is never listed, because the review refuses that kind.
+
+What it does with each listed item (the tradition and sources first, then concepts, then relationships); any REFUSED item makes it exit with code 1:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  K["Listed item"] --> Pre{"In the database,<br/>not demo, listed once?"}
+  Pre -->|no| Ref["REFUSED"]
+  Pre -->|yes| Acc{"Already verified<br/>or published?"}
+  Acc -->|yes| Kept["already accepted"]
+  Acc -->|no| Mode{"Mode"}
+  Mode -->|"--dry-run"| Chk{"State, permission,<br/>authorship, citations"}
+  Chk -->|all pass| Would["would verify"]
+  Chk -->|any fails| Ref
+  Mode -->|"--apply"| T["transition()<br/>as in the CMS"]
+  T -->|accepted| Ver["verified"]
+  T -->|refused| Ref
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  class K accent
+```
 
 ```bash
 # 1. dry run: reads only; reports "would verify" or every reason for refusal, per key

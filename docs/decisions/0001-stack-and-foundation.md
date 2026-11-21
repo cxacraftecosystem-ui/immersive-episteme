@@ -1,4 +1,9 @@
-# ADR 0001: Stack and project foundation
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/scroll-text.svg" width="32" align="top" alt="">&nbsp; ADR 0001: Stack and project foundation
 
 - **Status:** accepted
 - **Date:** 2026-10-14
@@ -33,6 +38,39 @@ on 2026-10-14.
 | Lint | ESLint 9.39.5 + eslint-config-next 16.4.5 | ESLint 10 exists, but create-next-app 16.4 pins `^9`. |
 | Runtime | Node 24 (`.nvmrc`), npm 11 | Current LTS. |
 | CI | GitHub Actions, actions pinned by commit SHA | Typecheck, lint, test (pgvector service container), build, then a Playwright smoke job. |
+
+Both conditions and the staff tools are routes of the one deployable, over shared modules and
+the one store:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart TD
+  BR["Browser"]
+  subgraph APP["One Next.js App Router app"]
+    subgraph UI["Routes, Tailwind, shadcn"]
+      D2["2D pages"]
+      D3["3D museum"]
+      CMS["CMS"]
+      RC["Research console"]
+    end
+    subgraph SRV["Shared server modules"]
+      KM["Knowledge model"]
+      SE["Study engine<br/>and assessments"]
+      TE["Telemetry"]
+      AU["Better Auth<br/>and RBAC"]
+    end
+    ORM["Drizzle ORM<br/>and pg"]
+  end
+  PG[("PostgreSQL<br/>pgvector, pg_trgm")]
+  BR --> UI
+  UI --> SRV
+  SRV --> ORM
+  ORM --> PG
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  classDef gold fill:#FAEECD,stroke:#CD9200,color:#1E1B2E
+  class KM accent
+  class BR,PG gold
+```
 
 ### Local database
 

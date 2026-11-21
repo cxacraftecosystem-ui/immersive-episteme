@@ -1,4 +1,9 @@
-# Module record: research console, parity engine, derived metrics, exports and analysis
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../readme-kit/assets/divider-dark.svg">
+  <img src="../../../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../../../readme-kit/assets/icons/terminal.svg" width="32" align="top" alt="">&nbsp; Module record: research console, parity engine, derived metrics, exports and analysis
 
 Implements DR-015 (content, exposure and citation equivalence; navigation timed separately from
 outcomes) as an executable activation guard, the concept note's analytics requirement CN-20,
@@ -40,6 +45,23 @@ below. Every number cites the test, command or file that produced it.
 - **Evidence.** `tests/unit/research/parity-engine.test.ts` (11 tests) and
   `tests/integration/research-console.test.ts` ("refuses activation while the parity report
   fails, and keeps the report"; "activates once the parity report passes").
+
+Activation as the code runs now (`activateStudy` in `src/server/research/studies.ts`,
+`runAndStoreParityReport` in `src/server/research/parity/store.ts`). A study whose config has no
+allocation seed is given a random one as it activates (`activationPins`).
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart TD
+  A(["Activate a draft study"]) --> R["Fresh parity report<br/>stored in parity_reports"]
+  R --> P{"Critical check<br/>failed?"}
+  P -->|yes| X["Refused<br/>report kept"]
+  P -->|no| H{"Inputs unchanged<br/>since the check?"}
+  H -->|no| Y["Error<br/>run again"]
+  H -->|yes| G["Study active<br/>seed pinned"]
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  class G accent
+```
 
 ### R2. What "the same content" means operationally
 

@@ -1,10 +1,54 @@
-# Module record: study engine (participant journey)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../readme-kit/assets/divider-dark.svg">
+  <img src="../../../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../../../readme-kit/assets/icons/workflow.svg" width="32" align="top" alt="">&nbsp; Module record: study engine (participant journey)
 
 Engineering location: `src/server/study/` (engine, allocation, answers, config, instruments,
 tokens, request helpers, server actions), `src/components/study/`, participant pages under
 `src/app/(study)/study/`. Tests: `tests/unit/study/` (3 files, 18 tests),
 `tests/integration/study-engine.test.ts` (11 tests), `tests/e2e/study-journey.spec.ts`
 (5 tests). Every number below cites the file that defines it or the test that checks it.
+
+The participant journey as the code runs now, in the default step order new studies start with
+(`DEFAULT_STEPS` and `BLIND_STEPS` in `src/server/study/config.ts`; `openSessionAfterConsent`,
+`positionOf`, `recordDeviceCheck`, `allocateSession` and `syncPosition` in
+`src/server/study/engine.ts`). A step whose battery holds no assessment is passed over, and
+withdrawal (S16) is open at every step; neither is drawn.
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart TD
+  EN["Enrolment<br/>study code"] --> CO{"Consent"}
+  CO -->|declined| DE["Visit ends<br/>no allocation"]
+  CO -->|granted| SO["Session opens<br/>tradition drawn"]
+  subgraph BL["Before allocation"]
+    QB["questionnaire_pre"] --> PT["pre_test"]
+  end
+  SO --> QB
+  PT --> DC{"Device check"}
+  DC -->|retry| DC
+  DC -->|fails| EX["Excluded"]
+  DC -->|passed| AL["Allocation<br/>condition drawn"]
+  subgraph LP["Practice and learning"]
+    FA["familiarisation"] --> ON["onboarding"]
+    ON --> LE["learning"]
+  end
+  AL --> FA
+  subgraph AF["After learning"]
+    QL["questionnaire_<br/>post_learning"] --> PO["post_test"]
+    PO --> TR["transfer"]
+    TR --> RC["reconstruction"]
+    RC --> LS["layout_sketch"]
+    LS --> QE["questionnaire_end"]
+  end
+  LE -->|finish or cap| QL
+  QE -->|days later| DT["delayed_test"]
+  DT -->|done or missed| FIN["Session completed"]
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  class AL accent
+```
 
 ## Requirements implemented
 

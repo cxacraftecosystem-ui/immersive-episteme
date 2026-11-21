@@ -1,4 +1,9 @@
-# Design process record
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../readme-kit/assets/divider-dark.svg">
+  <img src="../../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../../readme-kit/assets/icons/book-open.svg" width="32" align="top" alt="">&nbsp; Design process record
 
 This folder records **how** Immersive Episteme was designed and built: the decisions,
 the alternatives considered, the evidence behind each choice, and what each decision

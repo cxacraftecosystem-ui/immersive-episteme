@@ -1,6 +1,67 @@
-# Spatial compiler
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/map.svg" width="32" align="top" alt="">&nbsp; Spatial compiler
 
 > **Superseded, 2026-11-08 (DR-124).** The spatial compiler and its museum were removed (DR-076); no code under `src/` compiles a manifest any more and `npm run spatial:compile` no longer exists. The `spatial_manifests` tables remain for studies recorded earlier, and new studies carry `manifest_id = NULL`. Door 2 is built from the stage templates (`content/study/*.template.json`). Kept as history.
+
+What remains in the database today (`db/schema/spatial.ts`, `db/schema/study.ts`): stored
+manifests with their elements and encodings, which an earlier study or session may still pin.
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+erDiagram
+  CONTENT_SNAPSHOTS ||--o{ SPATIAL_MANIFESTS : "compiled into"
+  MAPPING_RULE_SETS ||--o{ SPATIAL_MANIFESTS : configures
+  SPATIAL_MANIFESTS ||--o{ SPATIAL_ELEMENTS : holds
+  SPATIAL_ELEMENTS ||--o{ SPATIAL_ELEMENT_ENCODINGS : records
+  RELATIONSHIPS ||--o{ SPATIAL_ELEMENT_ENCODINGS : "encoded by"
+  SPATIAL_MANIFESTS |o--o{ STUDIES : "pinned by"
+  SPATIAL_MANIFESTS |o--o{ STUDY_SESSIONS : "pinned by"
+  SPATIAL_MANIFESTS {
+    uuid id
+    uuid snapshot_id
+    uuid rule_set_id
+    text compiler_version
+    text seed
+    jsonb manifest
+    text manifest_hash
+    enum status
+  }
+  MAPPING_RULE_SETS {
+    uuid id
+    text name
+    int version
+    jsonb config
+    enum status
+  }
+  SPATIAL_ELEMENTS {
+    uuid manifest_id
+    text element_id
+    enum kind
+    uuid concept_id
+    text rule_id
+  }
+  SPATIAL_ELEMENT_ENCODINGS {
+    uuid manifest_id
+    text element_id
+    uuid relationship_id
+    text rule_id
+    text encoding
+  }
+  STUDIES {
+    uuid id
+    uuid snapshot_id
+    uuid manifest_id
+  }
+  STUDY_SESSIONS {
+    uuid id
+    uuid snapshot_id
+    uuid manifest_id
+  }
+```
 
 The spatial compiler is the main research artefact. It turns a validated knowledge graph
 into a navigable 3D museum layout, the *spatial manifest*. The transformation is
@@ -67,6 +128,51 @@ mapping*: it is reported, and the lowest rule id wins. The secondary cross-categ
 is added whenever the two endpoints sit in different rooms joined by a doorway.
 
 ## 3. Algorithm
+
+The stages in the order `compileSpatialManifest` in the removed `compile.ts` ran them:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  subgraph Inputs
+    G["Snapshot graph"]
+    TR["Selected traditions"]
+    RS["Mapping rule set"]
+    SD["Seed"]
+    AS["Exhibit assets"]
+  end
+  subgraph Compiler["compileSpatialManifest"]
+    SC["Scope<br/>graph.ts"]
+    RU["Rule resolution<br/>rules.ts"]
+    CH["Process chains<br/>graph.ts"]
+    LA["Layout<br/>layout.ts"]
+    NG["Routing<br/>navgrid.ts"]
+    EM["Elements<br/>compile.ts, render.ts"]
+    SU["Streaming units<br/>streaming.ts"]
+    VA["Validation<br/>validate.ts"]
+  end
+  subgraph Outputs["CLI output"]
+    MJ["Manifest<br/>manifest.json"]
+    VJ["Validation report<br/>validation.json"]
+  end
+  G --> SC
+  TR --> SC
+  RS --> RU
+  RS -.->|layout config| LA
+  SD --> LA
+  AS --> EM
+  SC --> RU
+  RU --> CH
+  CH --> LA
+  LA --> NG
+  NG --> EM
+  EM --> SU
+  SU --> MJ
+  MJ --> VA
+  VA --> VJ
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  class RU accent
+```
 
 1. **Scope** (`graph.ts`). Scope covers:
    - all concepts of the selected traditions;

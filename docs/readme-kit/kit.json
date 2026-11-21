@@ -1,0 +1,61 @@
+{
+  "hero": {
+    "eyebrow": "AI CoE · IIT Kharagpur",
+    "name": "Immersive Episteme",
+    "titleWrap": 18,
+    "tagline": "Learn one Indian hand-block-printing tradition from a visual course or by walking its working yards in 3D, from one cited stage template, and measure what each way teaches.",
+    "chips": ["Next.js 16", "Three.js r186", "Postgres + pgvector", "Better Auth", "Vercel bom1"],
+    "motifCaption": "read · walk · recall",
+    "label": "Immersive Episteme: learn a hand-block-printing tradition from a visual course or a 3D walk through its yards, and measure what each way teaches"
+  },
+  "cards": {
+    "label": "What the platform does: two doors, one study engine, cited knowledge, telemetry and the research console",
+    "columns": 3,
+    "items": [
+      { "icon": "book-open", "tag": "Door 1", "title": "A visual course", "body": "One panel per stage: name, cited caption, the tools and materials, and the cloth before and after." },
+      { "icon": "map", "tag": "Door 2", "title": "Walk the working yards", "body": "A real-time Three.js walk from station to station, with the same words painted where the work is done." },
+      { "icon": "workflow", "tag": "Study", "title": "One engine, one protocol", "body": "Consent, a blind pre-test, allocation by stratified blocks, tests, a concept map and a delayed test." },
+      { "icon": "badge-check", "tag": "Knowledge", "title": "Every claim cited", "body": "Concepts, claims and links carry quoted sources; learners see a stage only once a curator verifies it." },
+      { "icon": "activity", "tag": "Telemetry", "title": "Measured alike", "body": "Both doors send the same events in batches, stored append-only, checked for gaps and timed per stage." },
+      { "icon": "chart-column", "tag": "Research", "title": "Dashboard and exports", "body": "The registered outcomes, live session figures, concept-map scoring and CSV exports with a data dictionary." }
+    ]
+  },
+  "pipeline": {
+    "label": "How knowledge reaches a learner and comes back as data: curate, import, verify, snapshot, learn, measure",
+    "stages": [
+      { "icon": "scroll-text", "title": "Curate", "sub": "Sourced files in content/" },
+      { "icon": "database", "title": "Import", "sub": "Rows arrive under review" },
+      { "icon": "badge-check", "title": "Verify", "sub": "A curator accepts on evidence" },
+      { "icon": "archive", "title": "Snapshot", "sub": "A study pins one version" },
+      { "icon": "compass", "title": "Learn", "sub": "Door 1 or Door 2, one tradition" },
+      { "icon": "chart-line", "title": "Measure", "sub": "Tests, maps and telemetry" }
+    ]
+  },
+  "stats": {
+    "label": "At a glance: two doors from one template, six curated traditions, three in the study, one tradition per participant",
+    "tiles": [
+      { "icon": "layers", "kicker": "Doors", "value": "2", "label": "A course and a walk, one template" },
+      { "icon": "book", "kicker": "Traditions", "value": "6", "label": "Curated, every claim sourced" },
+      { "icon": "flask-conical", "kicker": "Study set", "value": "3", "label": "Ajrakh, Kalamkari, Sanganeri" },
+      { "icon": "users", "kicker": "Per person", "value": "1", "label": "Tradition, balanced by door" }
+    ]
+  },
+  "timeline": {
+    "label": "The platform so far: the foundation on 14 October, both conditions on 15 October, the walk through the yards on 4 November, real studies on 7 November, one tradition per participant on 8 November, deployed on Supabase PostgreSQL 17 in Mumbai on 9 November",
+    "items": [
+      { "date": "14 Oct", "title": "Foundation", "sub": "Schema, roles, six traditions" },
+      { "date": "15 Oct", "title": "Both conditions", "sub": "2D pages and a 3D museum" },
+      { "date": "4 Nov", "title": "Walking the process", "sub": "Door 2 yards, one template" },
+      { "date": "7 Nov", "title": "Real studies", "sub": "Consent, battery, outcomes" },
+      { "date": "8 Nov", "title": "One tradition each", "sub": "Balanced by door, roles by task" },
+      { "date": "9 Nov", "title": "Deployed", "sub": "Supabase PG17, Vercel bom1", "now": true }
+    ]
+  },
+  "divider": { "label": "Section divider" },
+  "footer": {
+    "title": "Two ways to learn a craft, measured alike.",
+    "sub": "AI CoE · IIT Kharagpur · Hand Block Printing",
+    "label": "Two ways to learn a craft, measured alike. AI CoE, IIT Kharagpur, Hand Block Printing."
+  },
+  "icons": "all"
+}

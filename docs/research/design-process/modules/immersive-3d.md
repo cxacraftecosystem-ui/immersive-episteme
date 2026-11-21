@@ -1,4 +1,9 @@
-# Module record: the immersive 3D museum (condition B)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../readme-kit/assets/divider-dark.svg">
+  <img src="../../../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../../../readme-kit/assets/icons/box.svg" width="32" align="top" alt="">&nbsp; Module record: the immersive 3D museum (condition B)
 
 Implements CN-10, CN-11 and CN-12 for the 3D condition, the rendering-quality specification
 (`docs/architecture/immersive-rendering-quality.md`, DR-012 to DR-014) and the equivalence rules

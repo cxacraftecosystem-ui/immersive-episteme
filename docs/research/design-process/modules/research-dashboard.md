@@ -1,4 +1,9 @@
-# Module record: research dashboard (score visibility, telemetry, data quality)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../readme-kit/assets/divider-dark.svg">
+  <img src="../../../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../../../readme-kit/assets/icons/chart-line.svg" width="32" align="top" alt="">&nbsp; Module record: research dashboard (score visibility, telemetry, data quality)
 
 Request from the project lead's user: "make an admin dashboard as well for score visibility and
 telemetry so that it can also be used as reference and data for research". Added requirements:
@@ -135,6 +140,32 @@ number below cites the test, command or file that produced it.
   (median 1409 ms; target < 2 s); page, probe, stream and CSV carry no-store; with the stream
   blocked the page switches to polling and does not show "Stale". Most of the latency is the
   750 ms coalescing delay plus the dev-mode render.
+
+The push path as the code runs now (`src/server/research/dashboard-live.ts`, the stream route,
+`_components/live-status.tsx`, `dashboard-cache.ts` and `dashboard-rollups.ts`):
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+sequenceDiagram
+  autonumber
+  participant T as Dashboard tab
+  participant S as Stream route
+  participant N as LISTEN client
+  participant W as Ingest or engine
+  participant DB as Postgres
+  participant R as Page render
+  T->>S: Open the event stream
+  S-->>T: ready, with fingerprint
+  W->>DB: Write a watched table
+  DB-->>N: NOTIFY ie_dashboard
+  N-->>S: Change for this study
+  S-->>T: change event
+  T->>R: router.refresh, debounced
+  R->>DB: Fingerprint, then memo or load
+  Note over R,DB: Rollups recomputed only for<br/>sessions whose watermark moved
+  R-->>T: Fresh render
+  Note over T,S: After repeated stream errors<br/>the tab polls the probe instead
+```
 
 ### RD7. Data for research: pseudonymised CSV per table, roles marked
 

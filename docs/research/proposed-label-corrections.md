@@ -1,4 +1,9 @@
-# Proposed Label Corrections
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/pen-tool.svg" width="32" align="top" alt="">&nbsp; Proposed Label Corrections
 
 Labels, local names, captions and keys belong to the curation effort (`content/`), and keys are used by code, so none of these was changed. Each proposal comes from the row verification of 2026-11-05 (DR-084): a researcher's answer checked by an independent skeptic, with the quotes held in `docs/research/substance-looks.json` and matched by `docs/research/tools/verify_substance_looks.py`. Where the evidence leaves a question open, the proposal says so.
 

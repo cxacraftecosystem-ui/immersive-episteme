@@ -1,4 +1,9 @@
-# ADR 0003: The visual system "Apparatus"
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/scroll-text.svg" width="32" align="top" alt="">&nbsp; ADR 0003: The visual system "Apparatus"
 
 - **Status:** accepted (before any participant data is collected)
 - **Supersedes:** nothing; extends ADR 0001 (stack and foundation)

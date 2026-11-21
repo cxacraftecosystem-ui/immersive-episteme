@@ -1,4 +1,9 @@
-# Module record: CMS and administration
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../readme-kit/assets/divider-dark.svg">
+  <img src="../../../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../../../readme-kit/assets/icons/wrench.svg" width="32" align="top" alt="">&nbsp; Module record: CMS and administration
 
 Covers knowledge authoring, the review and publishing workflow, release snapshots, the staff
 relationship-graph editor, the media library, the spatial studio and platform administration.
@@ -33,6 +38,35 @@ verified it → release snapshot (sha256) → study.
 | C12 | Manual spatial overrides must be audited and reproducible. | Edit stored manifests in place (breaks `manifest_hash` provenance); overrides on a draft rule set version. | Overrides are recorded on a draft `<rule set>+overrides` version. That version is frozen when compiled, so each manifest's uniqueness key names an immutable config plus override set. Traceability fields (id, kind, parent, concept, rule, encodes, trace, rationale) cannot be overridden. Publication re-validates on the server (`src/server/cms/spatial/`). | Test: `tests/integration/cms-spatial.test.ts`. Finding: overriding `/position` alone passes validation, because the geometry checks read `approach` and colliders (reported to the lead). |
 | C13 | Administration without deleting people. | Hard-delete users; lock. | Accounts are locked (`disabled_at`) and their sessions deleted. The last active platform admin cannot be revoked or locked, and an admin cannot lock themselves (`src/server/admin/users.ts`). Settings are read-only, because there is no settings table. | 40 actor foreign keys must keep their provenance (`docs/architecture/foundation.md` §1). Test: `tests/integration/admin-users.test.ts`. |
 
+The review states of C4 to C7 as the code runs now (`VERIFICATION_TRANSITIONS` in
+`src/features/knowledge/contracts.ts`, `transition` in `src/server/cms/workflow.ts`, `publishRelease`
+in `src/server/cms/release.ts`). Items made in the CMS start as drafts and imported content as
+`under_review` or `needs_evidence`; a substantive edit to accepted content returns it to review
+(`ie_return_edited_to_review`).
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+stateDiagram-v2
+  [*] --> draft
+  draft --> under_review: submit
+  under_review --> draft: withdraw
+  under_review --> verified: verify
+  under_review --> needs_evidence: needs evidence
+  needs_evidence --> under_review: submit
+  under_review --> rejected: reject
+  needs_evidence --> rejected: reject
+  verified --> published: release
+  verified --> under_review: reopen or edit
+  published --> under_review: reopen or edit
+  rejected --> draft: restore
+  archived --> draft: restore
+  draft --> archived: archive
+  needs_evidence --> archived: archive
+  rejected --> archived: archive
+  verified --> archived: archive
+  published --> archived: archive
+```
+
 ## Enforcement pattern (every mutation)
 
 Every mutation follows the same path: server action → `runAction` (`assertPermission` from the
@@ -41,6 +75,28 @@ session, then Zod) → service. The service re-checks with `ensure()`, writes in
 transaction, so a change and its audit record commit together. Pages enforce their route
 permission through `ConsolePage` and render controls only for what the actor may do. That is
 cosmetic: the server refuses regardless.
+
+The same path as the code runs now (`runAction` in `src/server/cms/run-action.ts`, `ensure`,
+`inActorTx` and `audit` in `src/server/cms/core.ts`):
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  SA["Server action"] --> RA{"runAction:<br/>permission?"}
+  RA -->|no| RF["Refused"]
+  RA -->|yes| ZD{"Zod input<br/>valid?"}
+  ZD -->|no| FE["Field errors"]
+  ZD -->|yes| SV["Service re-checks<br/>with ensure"]
+  SV --> TX["inActorTx<br/>actor and reason"]
+  TX --> CH["Row change<br/>and its triggers"]
+  TX --> AU["audit_log row"]
+  CH --> PG[("Postgres<br/>one commit")]
+  AU --> PG
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  classDef gold fill:#FAEECD,stroke:#CD9200,color:#1E1B2E
+  class TX accent
+  class PG gold
+```
 
 ## Verification
 

@@ -1,4 +1,9 @@
-# Note: permission to include the study images in the public source repository
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/lock.svg" width="32" align="top" alt="">&nbsp; Note: permission to include the study images in the public source repository
 
 The project lead (Saurav Kumar) asked the V&A and PARI whether the study's image files may be included in the project's public GitHub repository. He reports that both said yes by telephone:
 

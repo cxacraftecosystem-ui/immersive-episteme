@@ -1,4 +1,9 @@
-# Visual System (Apparatus): Implementation Decisions
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../readme-kit/assets/divider-dark.svg">
+  <img src="../../../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../../../readme-kit/assets/icons/palette.svg" width="32" align="top" alt="">&nbsp; Visual System (Apparatus): Implementation Decisions
 
 Module record for the implementation of `DESIGN.md` ("Apparatus"). Each work package appends its
 own section. The spec is binding. This file records how it was realised, and any judgement taken

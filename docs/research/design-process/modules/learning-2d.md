@@ -1,4 +1,9 @@
-# Module record: conventional 2D learning pathway (condition A)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../readme-kit/assets/divider-dark.svg">
+  <img src="../../../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../../../readme-kit/assets/icons/book-open.svg" width="32" align="top" alt="">&nbsp; Module record: conventional 2D learning pathway (condition A)
 
 Concept-note pathway A ("menus, cards, headings and hyperlinks"; requirements digest §6),
 master spec §7, the parity checklist (MP §11) and DR-015. Engineering reference:

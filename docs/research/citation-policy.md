@@ -1,4 +1,9 @@
-# Citation policy
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/book.svg" width="32" align="top" alt="">&nbsp; Citation policy
 
 Applies to **every citation in this project**: research documents, the knowledge dataset
 (`content/`), the design-process record, specifications, code comments that justify a

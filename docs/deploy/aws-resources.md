@@ -1,4 +1,9 @@
-# AWS resources
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/cloud.svg" width="32" align="top" alt="">&nbsp; AWS resources
 
 This file records the project's AWS account and resources: names, IDs and settings, never secrets. The `aws-provision` skill keeps it up to date.
 

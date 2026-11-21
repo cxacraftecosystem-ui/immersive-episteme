@@ -1,4 +1,9 @@
-# Module record: assessments (concept-map reconstruction, reference maps, scoring)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../readme-kit/assets/divider-dark.svg">
+  <img src="../../../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../../../readme-kit/assets/icons/file-text.svg" width="32" align="top" alt="">&nbsp; Module record: assessments (concept-map reconstruction, reference maps, scoring)
 
 Covers the participant concept-map editor (the primary outcome, CN-15/CN-16), expert
 reference-map authoring with inter-rater agreement and adjudication, assessment definitions
@@ -47,6 +52,34 @@ properties implemented here:
 | A15 | Multiple raters for transfer and free-text answers, with agreement. `derived_scores` has no rater column, and its unique key allows one row per metric. | Shared schema change (rater column / table); encode the rater in the metric name. | Interim: one row per rater and answer with metric `rubric.rating.r<first 16 hex of sha256(rater id)>`. The rater id is in `details.raterId`. Ratings are immutable once saved, and the rubric must be published first. Raters see answers without participant code or condition, in a fixed hashed order, and only their own ratings. Agreement uses the library's `cohensKappa` (each rater pair, shared answers) and `fleissKappa` (answers rated by every rater; levels as categories). | Test: 2 raters × 2 answers give exact agreement 0.5. A duplicate rating is refused; an off-rubric value is refused. The proper schema change is listed under "Shared changes needed". Unweighted κ ignores the ordinal distance between levels (see Open questions). |
 | A16 | Export-ready. | Only the console export page (another module); a route here. | `GET /research/scoring/export?dataset=scores\|map-edges&format=csv\|json[&assessment=]`. Requires `exports.create`, like every other export, and writes an `export.scoring` audit row per download (DR-111). Long format, joinable on participant code, session id and condition. `study_is_demo` and `non_experimental` are flagged, not filtered. Cells starting with a formula character are prefixed with `'` (`toCsv`). | e2e: the CSV contains the participant code and `cmap.valid_relationships`. |
 | A17 | Keyed items need the participant's answer, which the study engine writes into `responses.raw`. | Agree a format first; read tolerantly. | Tolerant reader (`extractAnswer`): a string or number, or an object with `optionId`, `optionIds`, `values` or `value`. Anything else gets value `null` with `reason: unrecognised_answer`, never a guess. Metric `item.key_match` 1.0.0. | Test: two keyed answers give values 1 and 0. |
+
+The reference-map and scoring path of A10 to A14, as the code runs now (`submitRaterMap`,
+`finaliseReferenceMap` and `lockReferenceMap` in `src/server/assessment/reference-maps.ts`,
+`scoreConceptMaps` in `src/server/assessment/scoring.ts`). Scoring needs a finalised map, not a
+locked one.
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  subgraph REF["Reference map version"]
+    RM["Rater maps<br/>blind, two or more"] --> CS["Consensus<br/>strict majority"]
+    CS --> TI{"Ties left?"}
+    TI -->|yes| AJ["Adjudication<br/>with a reason"]
+    AJ --> CS
+    TI -->|no| FN["Finalised map<br/>reference_map_edges"]
+    FN -->|lock| LK["Locked version"]
+  end
+  PM["Final participant maps<br/>concept_maps"] --> SM["scoreConceptMap<br/>each map"]
+  PM --> CM["compareConceptMaps<br/>pre and post"]
+  FN --> SM
+  FN --> CM
+  SM --> DS[("derived_scores<br/>append-only")]
+  CM --> DS
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  classDef gold fill:#FAEECD,stroke:#CD9200,color:#1E1B2E
+  class FN accent
+  class DS gold
+```
 
 ## What is measured and how (for the methods section)
 

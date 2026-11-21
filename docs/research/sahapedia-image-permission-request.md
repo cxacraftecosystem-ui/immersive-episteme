@@ -1,4 +1,9 @@
-# Request to Sahapedia: use of a gallery photograph in a non-commercial research study
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/send.svg" width="32" align="top" alt="">&nbsp; Request to Sahapedia: use of a gallery photograph in a non-commercial research study
 
 **To:** contact@sahapedia.org
 **From:** cxa.craftecosystem@gmail.com

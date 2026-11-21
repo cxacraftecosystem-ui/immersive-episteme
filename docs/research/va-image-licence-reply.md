@@ -1,4 +1,9 @@
-# V&A reply: use of three collection images in the study
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/mail.svg" width="32" align="top" alt="">&nbsp; V&A reply: use of three collection images in the study
 
 This is the reply from the V&A Images team (vaimages@vam.ac.uk) to `va-image-licence-request.md`. The project lead forwarded it, and it is reproduced verbatim. Decision record DR-020 lists the conditions and how the platform enforces them.
 

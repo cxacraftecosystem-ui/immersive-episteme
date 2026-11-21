@@ -1,4 +1,9 @@
-# Technical requirements: concept note and reference papers
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/cpu.svg" width="32" align="top" alt="">&nbsp; Technical requirements: concept note and reference papers
 
 This document extracts the technical requirements for Immersive Episteme from the concept note (primary authority for scope) and the ten reference papers supplied with it. It follows `docs/research/citation-policy.md`: every requirement drawn from a paper gives the citation, page number and an exact verbatim quotation.
 

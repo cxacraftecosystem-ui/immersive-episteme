@@ -1,4 +1,9 @@
-# Sahapedia reply: use of a gallery photograph in the study
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/mail.svg" width="32" align="top" alt="">&nbsp; Sahapedia reply: use of a gallery photograph in the study
 
 Sahapedia (contact@sahapedia.org) sent two replies to `sahapedia-image-permission-request.md`, both reproduced verbatim below and forwarded by the project lead.
 

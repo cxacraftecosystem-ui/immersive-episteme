@@ -1,4 +1,9 @@
-# Immersive rendering quality: acceptance specification
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/gauge.svg" width="32" align="top" alt="">&nbsp; Immersive rendering quality: acceptance specification
 
 Status: binding for every `/learn/immersive` build. Owner: tech lead. Added 2026-10-14
 at the project lead's request: "no rendering issues, flickering, distorted and unnatural
@@ -209,6 +214,37 @@ and definition. We accommodate everyone." So:
     source (SSIM ≥ 0.98 and no visible blocking).
   - Non-colour maps (normals and the like) are either kept uncompressed or included in C12 with
     a measured result.
+
+In the Door 2 walk a frame-budget governor sets the render scale at run time, at rest as in
+motion, in steps of 0.25 between CSS density and the device pixel ratio capped at 2 (DR-109,
+DR-117, `src/features/walkthrough/domain/render-scale.ts`):
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart TD
+  subgraph CAL["Before the walk starts"]
+    LV["Lowest level<br/>CSS density"] --> SV["Start-view cost<br/>GPU or frame time"]
+    SV --> SL["Starting level<br/>by pixel count"]
+  end
+  SL --> FS(["Frame sample<br/>frame and GPU time"])
+  FS --> ST{"Stall?"}
+  ST -->|yes| SK["Not counted"]
+  ST -->|no| TM{"GPU timer<br/>has reported?"}
+  TM -->|yes| GO{"GPU time<br/>over budget?"}
+  TM -->|no| FO{"Frame time<br/>over budget?"}
+  GO -->|yes| LW["Lower to a level<br/>that fits"]
+  FO -->|yes| PB["Lower as a probe,<br/>back if no gain"]
+  GO -->|no| RM{"Settled, unblocked,<br/>next level fits?"}
+  FO -->|no| RM
+  RM -->|yes| UP["Raise one step"]
+  LW --> AP["Apply scale"]
+  PB --> AP
+  UP --> AP
+  AP --> CV["Canvas only grows,<br/>region sized to scale"]
+  CV --> FS
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  class FS accent
+```
 
 ### 2c. High-tier budgets (reference lab desktop)
 

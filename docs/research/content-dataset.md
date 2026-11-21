@@ -1,4 +1,9 @@
-# Content dataset: six block-printing traditions
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/archive.svg" width="32" align="top" alt="">&nbsp; Content dataset: six block-printing traditions
 
 Status: draft for researcher review, 2026-10-14. Nothing in the dataset is `verified`.
 Files: `content/traditions/<slug>/tradition.json` (6), `content/shared/craft-science.json`,

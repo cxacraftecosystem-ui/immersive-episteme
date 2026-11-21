@@ -1,4 +1,9 @@
-# Visual alignment and shared chrome
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../readme-kit/assets/divider-dark.svg">
+  <img src="../../../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../../../readme-kit/assets/icons/compass.svg" width="32" align="top" alt="">&nbsp; Visual alignment and shared chrome
 
 Module record for the visual-alignment audit of the public pages, sign-in, the 2D condition
 (`/learn/2d/*`), the participant study pages (`/study/*`), the CMS (`/cms/*`) and the admin console

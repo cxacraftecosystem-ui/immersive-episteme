@@ -1,4 +1,9 @@
-# ADR 0002: Feature dependencies for the later waves
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/scroll-text.svg" width="32" align="top" alt="">&nbsp; ADR 0002: Feature dependencies for the later waves
 
 - **Status:** accepted
 - **Date:** 2026-10-14
@@ -33,6 +38,42 @@ Versions resolved with `npm view <pkg> version` on 2026-10-14. Peer ranges check
 | `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` | 3.1151.0 | media object storage (`assets.storage_key`), presigned uploads/downloads | Same release line for both. Server only. |
 | `gsap` | 3.15.0 | public pages only | Animation on the public site. Not in the learning conditions, so both conditions keep identical motion behaviour. |
 | `fake-indexeddb` (dev) | 6.2.5 | tests of the telemetry outbox | IndexedDB in Node for Vitest. |
+
+Which work stream each package serves, and where the bundle rule under Consequences confines it:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  subgraph STREAMS["Work streams"]
+    M3["3D museum<br/>/learn/immersive"]
+    CM["Concept-map editor<br/>graph views"]
+    CMS["CMS editor"]
+    RA["Research analytics<br/>research pages"]
+    MD["Media handling"]
+    PB["Public pages<br/>(public)"]
+  end
+  subgraph CLIENT["Client packages"]
+    TH["three, fiber, drei"]
+    XY["@xyflow/react"]
+    TT["Tiptap"]
+    EC["echarts"]
+    GS["gsap"]
+  end
+  subgraph SERVER["Server only"]
+    S3["AWS SDK for S3<br/>and presigner"]
+  end
+  M3 --> TH
+  CM --> XY
+  CMS --> TT
+  RA --> EC
+  PB --> GS
+  MD --> S3
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  class TH accent
+```
+
+The diagram draws the decision as recorded. Since then `@react-three/fiber`, `@react-three/drei` and `gsap` have
+left `package.json`: Door 2 drives `three` directly from `src/features/walkthrough`.
 
 ### Override
 

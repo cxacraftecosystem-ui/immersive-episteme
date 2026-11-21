@@ -1,4 +1,9 @@
-# Request to PARI: use of two article photographs in a non-commercial research study
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/send.svg" width="32" align="top" alt="">&nbsp; Request to PARI: use of two article photographs in a non-commercial research study
 
 **To:** PARI editorial team (named recipients' addresses withheld)
 **From:** cxa.craftecosystem@gmail.com

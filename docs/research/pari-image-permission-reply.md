@@ -1,4 +1,9 @@
-# PARI reply: use of three article photographs in the study
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/mail.svg" width="32" align="top" alt="">&nbsp; PARI reply: use of three article photographs in the study
 
 PARI (Zahra, People's Archive of Rural India) sent three replies to `pari-image-permission-request.md`, all reproduced verbatim below and forwarded by the project lead:
 

@@ -1,4 +1,9 @@
-# Knowledge and research data schema
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/database.svg" width="32" align="top" alt="">&nbsp; Knowledge and research data schema
 
 - **Status:** implemented (migrations `0000`–`0003`)
 - **Code:** `db/schema/*.ts` (Drizzle), `db/migrations/*.sql`, `src/features/*/contracts.ts` (Zod),
@@ -37,25 +42,148 @@ the same migration chain.
 
 ## Domains
 
-```
-Knowledge   content_packages ─┬─ traditions ── tradition_sources ── sources
-                              ├─ sources
-                              ├─ concepts ── concept_claims ── concept_claim_sources ── sources
-                              └─ relationships (concept → concept) ── relationship_sources ── sources
-            knowledge_categories (14), relationship_types (registry), verification_records (history)
-Publishing  content_snapshots ── snapshot_items;  release_manifests;  parity_reports
-Media       assets ── asset_versions;  asset_links (asset ↔ concept);  media_candidates
-Spatial     mapping_rule_sets ── manual_overrides;  spatial_manifests ── spatial_elements ── spatial_element_encodings
-Study       studies ── study_conditions;  participants ── consent_records;  allocations;  study_sessions;
-            protocol_deviations;  session_annotations;  study_assessments (battery)
-Assessment  assessments ── assessment_items;  responses;  scoring_rubrics;
-            reference_maps ── reference_map_edges, reference_map_raters;
-            concept_maps ── concept_map_edges;  derived_scores
-Telemetry   event_types;  telemetry_batches;  telemetry_events;  telemetry_quarantine;  sequence_gaps;  derived_metrics
-Audit       audit_log
+The domains and the links between them; each domain's tables are drawn under its heading below. The
+spatial links are dotted: the tables remain and a study may still pin a manifest, but the compiler that wrote them
+was removed with the old doors (DR-076), and no door reads a manifest.
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  subgraph content ["Content"]
+    K["Knowledge<br/>concepts, relationships"]
+    MD["Media<br/>assets, candidates"]
+    P["Publishing<br/>content_snapshots"]
+    SP["Spatial<br/>spatial_manifests"]
+    RL["Release<br/>release_manifests"]
+  end
+  subgraph research ["Research"]
+    ST["Study<br/>studies, study_sessions"]
+    AS["Assessment<br/>responses, concept_maps"]
+    TL["Telemetry<br/>telemetry_events"]
+  end
+  subgraph platform ["Platform"]
+    AC["Auth and access<br/>users, invite_codes"]
+    AU["Audit<br/>audit_log"]
+  end
+  K -->|frozen into| P
+  MD -->|figures frozen| P
+  P -.->|compiled into| SP
+  P --> RL
+  SP -.-> RL
+  P -->|pinned by| ST
+  SP -.->|pinned by| ST
+  RL -->|pinned by| ST
+  ST -->|sessions| AS
+  ST -->|sessions| TL
+  AC -->|invites| ST
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  class K accent
 ```
 
 ### Knowledge
+
+The knowledge tables and their keys (`db/schema/knowledge.ts`):
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+erDiagram
+  CONTENT_PACKAGES |o--o{ TRADITIONS : holds
+  CONTENT_PACKAGES |o--o{ SOURCES : scopes
+  CONTENT_PACKAGES |o--o{ CONCEPTS : holds
+  CONTENT_PACKAGES |o--o{ RELATIONSHIPS : holds
+  TRADITIONS ||--o{ TRADITION_SOURCES : cites
+  SOURCES ||--o{ TRADITION_SOURCES : "cited by"
+  TRADITIONS |o--o{ CONCEPTS : groups
+  KNOWLEDGE_CATEGORIES ||--o{ CONCEPTS : classifies
+  CONCEPTS ||--o{ CONCEPT_CLAIMS : states
+  CONCEPT_CLAIMS ||--o{ CONCEPT_CLAIM_SOURCES : cites
+  SOURCES ||--o{ CONCEPT_CLAIM_SOURCES : supports
+  CONCEPTS ||--o{ RELATIONSHIPS : "source of"
+  CONCEPTS ||--o{ RELATIONSHIPS : "target of"
+  RELATIONSHIP_TYPES ||--o{ RELATIONSHIPS : types
+  RELATIONSHIPS ||--o{ RELATIONSHIP_SOURCES : cites
+  SOURCES ||--o{ RELATIONSHIP_SOURCES : supports
+  CONTENT_PACKAGES {
+    uuid id
+    text slug
+    text kind
+    text file_sha256
+  }
+  TRADITIONS {
+    uuid id
+    uuid package_id
+    text slug
+    enum verification_state
+    bool is_demo
+  }
+  SOURCES {
+    uuid id
+    uuid package_id
+    text local_key
+    enum kind
+    enum reliability
+    enum verification_state
+  }
+  TRADITION_SOURCES {
+    uuid tradition_id
+    uuid source_id
+    text purpose
+  }
+  KNOWLEDGE_CATEGORIES {
+    text code
+    text template_group
+  }
+  CONCEPTS {
+    uuid id
+    text key
+    enum type
+    text category_code
+    uuid tradition_id
+    enum provenance_kind
+    enum verification_state
+    bool is_demo
+  }
+  CONCEPT_CLAIMS {
+    uuid id
+    uuid concept_id
+    int position
+    text quote
+  }
+  CONCEPT_CLAIM_SOURCES {
+    uuid claim_id
+    uuid source_id
+    text locator
+    jsonb evidence
+  }
+  RELATIONSHIP_TYPES {
+    text code
+    enum semantics
+    bool directed
+    bool ordered
+    bool allows_cycles
+  }
+  RELATIONSHIPS {
+    uuid id
+    uuid source_concept_id
+    uuid target_concept_id
+    text type_code
+    int ordinal
+    enum verification_state
+  }
+  RELATIONSHIP_SOURCES {
+    uuid relationship_id
+    uuid source_id
+    text quote
+    text locator
+  }
+  VERIFICATION_RECORDS {
+    enum entity_kind
+    uuid entity_id
+    enum from_state
+    enum to_state
+    text actor_id
+  }
+```
 
 - **Concepts** are one table with a `type` (13 values: tradition, material, tool, process_stage,
   artisan_decision, design_principle, outcome, scientific_mechanism, environmental_condition,
@@ -97,12 +225,90 @@ Audit       audit_log
 - **verification_records** is the append-only review history, written by trigger on every state
   change of traditions, concepts, relationships, sources and assets.
 
+The CMS moves an item only along these transitions (`VERIFICATION_TRANSITIONS` in
+`src/features/knowledge/contracts.ts`, labelled with the names `classifyTransition` gives them
+in `src/server/cms/workflow.ts`); `published` is reached only through a release:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+stateDiagram-v2
+  [*] --> draft: created in CMS
+  [*] --> under_review: imported
+  [*] --> needs_evidence: imported
+  draft --> under_review: submit
+  draft --> archived: archive
+  under_review --> verified: verify
+  under_review --> needs_evidence: needs evidence
+  under_review --> rejected: reject
+  under_review --> draft: withdraw
+  needs_evidence --> under_review: submit
+  needs_evidence --> rejected: reject
+  needs_evidence --> archived: archive
+  verified --> published: release
+  verified --> under_review: reopen
+  verified --> archived: archive
+  published --> under_review: reopen
+  published --> archived: archive
+  rejected --> draft: restore
+  rejected --> archived: archive
+  archived --> draft: restore
+```
+
 ### Publishing
 
 `content_snapshots.payload` holds an immutable **knowledge bundle** (contract below);
 `snapshot_items` index every entity frozen into it (kind, uuid or code, key, item hash) for
 traceability and parity queries. `release_manifests` tie a snapshot, a spatial manifest and an
 app build together. `parity_reports` are append-only results of the parity checks.
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+erDiagram
+  CONTENT_SNAPSHOTS ||--o{ SNAPSHOT_ITEMS : indexes
+  CONTENT_SNAPSHOTS ||--o{ SNAPSHOT_FIGURES : freezes
+  ASSETS ||--o{ SNAPSHOT_FIGURES : "frozen as"
+  CONTENT_SNAPSHOTS ||--o{ RELEASE_MANIFESTS : "released in"
+  SPATIAL_MANIFESTS |o--o{ RELEASE_MANIFESTS : "released in"
+  CONTENT_SNAPSHOTS ||--o{ PARITY_REPORTS : "checked by"
+  SPATIAL_MANIFESTS |o--o{ PARITY_REPORTS : "checked by"
+  RELEASE_MANIFESTS |o--o{ PARITY_REPORTS : "checked by"
+  CONTENT_SNAPSHOTS {
+    uuid id
+    text version_label
+    text kind
+    enum status
+    jsonb payload
+    text payload_sha256
+    bool includes_unverified
+    bool is_demo
+  }
+  SNAPSHOT_ITEMS {
+    uuid snapshot_id
+    enum item_kind
+    text entity_ref
+    text item_sha256
+  }
+  SNAPSHOT_FIGURES {
+    uuid snapshot_id
+    uuid concept_id
+    uuid asset_id
+    text licence
+    text sha256
+  }
+  RELEASE_MANIFESTS {
+    uuid id
+    uuid snapshot_id
+    uuid spatial_manifest_id
+    text app_build
+    enum status
+  }
+  PARITY_REPORTS {
+    uuid snapshot_id
+    uuid release_manifest_id
+    bool passed
+    text report_sha256
+  }
+```
 
 `content_snapshots.kind` (migration 0006) is `release` (default) or `review`. A review snapshot is
 built by `npm run content:import` from unverified curated content: it is always a draft with
@@ -111,6 +317,70 @@ non-demo study may reference it or a manifest compiled from it (migration 0007).
 `data-and-telemetry-layer.md` §5. `media_candidates` also keep `width`, `height`, `mime_type`
 and `dimensions_source` from the files, and `spatial_manifests.traditions` (the compiled
 selection) is part of the manifest uniqueness key.
+
+A stored snapshot's `kind` and `status` over its life (the snapshot guards of migrations 0005
+and 0007, and `content_snapshots_review_ck`):
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+stateDiagram-v2
+  [*] --> review_draft: review build
+  [*] --> release_draft: CMS release
+  release_draft --> release_published: publish
+  note right of review_draft
+    Always draft with includes_unverified,
+    its kind never changes, and no
+    non-demo study may use it
+  end note
+  note right of release_published
+    No UPDATE or DELETE, items frozen,
+    published_at and item_count set
+  end note
+```
+
+The media tables (`db/schema/media.ts`):
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+erDiagram
+  ASSETS ||--o{ ASSET_VERSIONS : keeps
+  ASSETS ||--o{ ASSET_LINKS : "shown by"
+  CONCEPTS ||--o{ ASSET_LINKS : illustrated
+  SOURCES |o--o{ ASSETS : credits
+  CONTENT_PACKAGES |o--o{ MEDIA_CANDIDATES : proposes
+  CONCEPTS |o--o{ MEDIA_CANDIDATES : depicts
+  ASSETS |o--o{ MEDIA_CANDIDATES : "imported as"
+  ASSETS {
+    uuid id
+    enum kind
+    text storage_key
+    text sha256
+    text licence
+    uuid source_id
+    enum verification_state
+    bool is_demo
+  }
+  ASSET_VERSIONS {
+    uuid asset_id
+    int version
+    text variant
+    text storage_key
+  }
+  ASSET_LINKS {
+    uuid asset_id
+    uuid concept_id
+    enum role
+    int position
+  }
+  MEDIA_CANDIDATES {
+    uuid package_id
+    text url
+    text depicts_key
+    uuid depicts_concept_id
+    enum status
+    uuid asset_id
+  }
+```
 
 ### Spatial
 
@@ -121,6 +391,57 @@ element id to its concept and rule, and `spatial_element_encodings` records whic
 an element encodes under which rule, giving the traceability chain relationship → rule →
 element → telemetry `target` → measure. `manual_overrides` are reasoned, never deleted, and
 freeze with their rule set.
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+erDiagram
+  MAPPING_RULE_SETS ||--o{ MANUAL_OVERRIDES : "adjusted by"
+  MAPPING_RULE_SETS ||--o{ SPATIAL_MANIFESTS : compiles
+  CONTENT_SNAPSHOTS ||--o{ SPATIAL_MANIFESTS : "compiled into"
+  SPATIAL_MANIFESTS ||--o{ SPATIAL_ELEMENTS : indexes
+  CONCEPTS |o--o{ SPATIAL_ELEMENTS : "shown as"
+  SPATIAL_ELEMENTS ||--o{ SPATIAL_ELEMENT_ENCODINGS : encodes
+  RELATIONSHIPS ||--o{ SPATIAL_ELEMENT_ENCODINGS : "encoded by"
+  MAPPING_RULE_SETS {
+    uuid id
+    text name
+    int version
+    jsonb config
+    text config_sha256
+    enum status
+  }
+  MANUAL_OVERRIDES {
+    uuid rule_set_id
+    text target_element_id
+    text field
+    text reason
+    timestamptz revoked_at
+  }
+  SPATIAL_MANIFESTS {
+    uuid id
+    uuid snapshot_id
+    uuid rule_set_id
+    text compiler_version
+    text seed
+    text traditions
+    jsonb manifest
+    enum status
+  }
+  SPATIAL_ELEMENTS {
+    uuid manifest_id
+    text element_id
+    enum kind
+    uuid concept_id
+    text rule_id
+  }
+  SPATIAL_ELEMENT_ENCODINGS {
+    uuid manifest_id
+    text element_id
+    uuid relationship_id
+    text rule_id
+    text encoding
+  }
+```
 
 ### Study, assessment, telemetry
 
@@ -138,6 +459,273 @@ freeze with their rule set.
   event type maps to a shared `analytic_concept` (`room_entered` and `page_entered` both map to
   `knowledge_domain_accessed`). The registry is `EVENT_TYPE_REGISTRY` in
   `src/features/telemetry/contracts.ts` and covers EVT-01 to EVT-14.
+
+The study tables (`db/schema/study.ts`, with `invite_codes` from `db/schema/access.ts`):
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+erDiagram
+  STUDIES ||--o{ STUDY_CONDITIONS : compares
+  STUDIES ||--o{ PARTICIPANTS : enrols
+  STUDIES |o--o{ INVITE_CODES : "invites to"
+  INVITE_CODES |o--o{ PARTICIPANTS : admits
+  PARTICIPANTS ||--o{ CONSENT_RECORDS : gives
+  PARTICIPANTS ||--o{ ALLOCATIONS : receives
+  STUDY_CONDITIONS ||--o{ ALLOCATIONS : assigns
+  PARTICIPANTS ||--o{ STUDY_SESSIONS : sits
+  STUDY_CONDITIONS |o--o{ STUDY_SESSIONS : "runs in"
+  ALLOCATIONS |o--o{ STUDY_SESSIONS : decides
+  STUDY_SESSIONS ||--o{ STAGE_VISITS : records
+  STUDY_SESSIONS ||--o| DELAYED_TEST_SCHEDULE : schedules
+  STUDY_SESSIONS ||--o{ SESSION_ANNOTATIONS : "noted in"
+  STUDIES ||--o{ PROTOCOL_DEVIATIONS : logs
+  STUDY_SESSIONS |o--o{ PROTOCOL_DEVIATIONS : concerns
+  STUDIES {
+    uuid id
+    text slug
+    uuid snapshot_id
+    uuid manifest_id
+    uuid release_manifest_id
+    enum status
+    jsonb config
+    bool is_demo
+  }
+  STUDY_CONDITIONS {
+    uuid id
+    uuid study_id
+    text code
+    enum interface
+    int allocation_weight
+  }
+  PARTICIPANTS {
+    uuid id
+    uuid study_id
+    text code
+    enum status
+    text stratum
+    uuid returning_from
+    uuid admitted_by_invite_id
+  }
+  INVITE_CODES {
+    uuid id
+    uuid study_id
+    text code_hash
+    int max_uses
+    timestamptz revoked_at
+  }
+  CONSENT_RECORDS {
+    uuid participant_id
+    text consent_version
+    text consent_text_sha256
+    enum decision
+  }
+  ALLOCATIONS {
+    uuid id
+    uuid participant_id
+    uuid condition_id
+    int period
+    enum algorithm
+    int sequence_index
+    text stratum
+  }
+  STUDY_SESSIONS {
+    uuid id
+    uuid participant_id
+    uuid condition_id
+    uuid allocation_id
+    uuid snapshot_id
+    enum status
+    text tradition
+    bool withdrawn
+  }
+  STAGE_VISITS {
+    uuid session_id
+    text stage_key
+    int visit_index
+  }
+  DELAYED_TEST_SCHEDULE {
+    uuid session_id
+    timestamptz opens_at
+    timestamptz due_at
+    timestamptz closes_at
+  }
+  SESSION_ANNOTATIONS {
+    uuid session_id
+    text author_id
+    text kind
+  }
+  PROTOCOL_DEVIATIONS {
+    uuid study_id
+    uuid session_id
+    enum severity
+  }
+```
+
+The assessment tables (`db/schema/assessment.ts`); `study_assessments` is a study's battery:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+erDiagram
+  STUDIES ||--o{ STUDY_ASSESSMENTS : battery
+  ASSESSMENTS ||--o{ STUDY_ASSESSMENTS : "used in"
+  ASSESSMENTS ||--o{ ASSESSMENT_ITEMS : holds
+  ASSESSMENTS ||--o{ SCORING_RUBRICS : "scored by"
+  ASSESSMENTS ||--o{ REFERENCE_MAPS : "keyed by"
+  REFERENCE_MAPS ||--o{ REFERENCE_MAP_EDGES : holds
+  REFERENCE_MAPS ||--o{ REFERENCE_MAP_RATERS : "rated by"
+  ASSESSMENT_ITEMS ||--o{ RESPONSES : answers
+  STUDY_SESSIONS ||--o{ RESPONSES : collects
+  ASSESSMENT_ITEMS ||--o{ CONCEPT_MAPS : "drawn for"
+  STUDY_SESSIONS ||--o{ CONCEPT_MAPS : collects
+  CONCEPT_MAPS ||--o{ CONCEPT_MAP_EDGES : holds
+  CONCEPT_MAPS ||--o{ CONCEPT_MAP_REVISIONS : keeps
+  STUDY_SESSIONS ||--o{ DERIVED_SCORES : scores
+  RESPONSES |o--o{ DERIVED_SCORES : "scored in"
+  CONCEPT_MAPS |o--o{ DERIVED_SCORES : "scored in"
+  REFERENCE_MAPS |o--o{ DERIVED_SCORES : "scored against"
+  ASSESSMENTS {
+    uuid id
+    text code
+    int version
+    enum kind
+    enum status
+  }
+  STUDY_ASSESSMENTS {
+    uuid study_id
+    uuid assessment_id
+    enum phase
+    int position
+  }
+  ASSESSMENT_ITEMS {
+    uuid id
+    uuid assessment_id
+    text item_key
+    enum kind
+    jsonb answer_key
+  }
+  RESPONSES {
+    uuid session_id
+    uuid participant_id
+    uuid item_id
+    int attempt
+    enum status
+    jsonb raw
+  }
+  SCORING_RUBRICS {
+    uuid assessment_id
+    uuid item_id
+    int version
+    enum status
+  }
+  REFERENCE_MAPS {
+    uuid id
+    uuid assessment_id
+    uuid snapshot_id
+    int version
+    enum status
+  }
+  REFERENCE_MAP_EDGES {
+    uuid reference_map_id
+    uuid source_concept_id
+    uuid target_concept_id
+    text relationship_type_code
+    bool required
+  }
+  REFERENCE_MAP_RATERS {
+    uuid reference_map_id
+    text rater_id
+    enum role
+  }
+  CONCEPT_MAPS {
+    uuid id
+    uuid session_id
+    uuid item_id
+    enum phase
+    int revision
+    bool is_final
+  }
+  CONCEPT_MAP_EDGES {
+    uuid concept_map_id
+    text edge_key
+    uuid source_concept_id
+    uuid target_concept_id
+    text relationship_type_code
+  }
+  CONCEPT_MAP_REVISIONS {
+    uuid concept_map_id
+    int revision
+  }
+  DERIVED_SCORES {
+    uuid session_id
+    uuid assessment_id
+    uuid response_id
+    uuid concept_map_id
+    uuid reference_map_id
+    text metric_version
+    text pipeline_version
+  }
+```
+
+The telemetry tables (`db/schema/telemetry.ts`):
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+erDiagram
+  STUDY_SESSIONS ||--o{ TELEMETRY_BATCHES : sends
+  TELEMETRY_BATCHES |o--o{ TELEMETRY_EVENTS : delivers
+  STUDY_SESSIONS ||--o{ TELEMETRY_EVENTS : records
+  EVENT_TYPES ||--o{ TELEMETRY_EVENTS : types
+  TELEMETRY_BATCHES |o--o{ TELEMETRY_QUARANTINE : holds
+  STUDY_SESSIONS |o--o{ TELEMETRY_QUARANTINE : holds
+  STUDY_SESSIONS ||--o{ SEQUENCE_GAPS : flags
+  STUDY_SESSIONS ||--o{ DERIVED_METRICS : "measured by"
+  STUDY_SESSIONS ||--o| SESSION_TELEMETRY_ROLLUPS : "rolled up"
+  EVENT_TYPES {
+    text code
+    text analytic_concept
+    enum scope
+  }
+  TELEMETRY_BATCHES {
+    uuid id
+    text idempotency_key
+    uuid session_id
+    enum status
+    int event_count
+  }
+  TELEMETRY_EVENTS {
+    uuid event_id
+    uuid batch_id
+    uuid session_id
+    uuid condition_id
+    int seq
+    text event_type_code
+    text target
+    uuid snapshot_id
+  }
+  TELEMETRY_QUARANTINE {
+    uuid batch_id
+    uuid session_id
+    text reason
+  }
+  SEQUENCE_GAPS {
+    uuid session_id
+    enum kind
+    int from_seq
+    int to_seq
+  }
+  DERIVED_METRICS {
+    uuid session_id
+    text metric_name
+    text metric_version
+    text input_sha256
+    text pipeline_version
+  }
+  SESSION_TELEMETRY_ROLLUPS {
+    uuid session_id
+    text metrics_version
+    int last_seq
+  }
+```
 
 ## Demo isolation
 

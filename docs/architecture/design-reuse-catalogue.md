@@ -1,4 +1,9 @@
-# Design reuse catalogue: what Immersive Episteme takes from `virtual-walkthrough`
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/box.svg" width="32" align="top" alt="">&nbsp; Design reuse catalogue: what Immersive Episteme takes from `virtual-walkthrough`
 
 Status: proposal, 2026-10-14. Owner: tech lead.
 

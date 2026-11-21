@@ -1,24 +1,55 @@
-# Data and telemetry layer (wave 0)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../readme-kit/assets/divider-dark.svg">
+  <img src="../readme-kit/assets/divider-light.svg" width="100%" alt="">
+</picture>
+
+# <img src="../readme-kit/assets/icons/activity.svg" width="32" align="top" alt="">&nbsp; Data and telemetry layer (wave 0)
 
 Status: current as of 2026-10-14. API reference for page authors of both learning conditions,
 the study pages, the CMS and the research console. Companion to `knowledge-schema.md` (tables),
 `foundation.md` (auth, participant sessions) and `spatial-compiler.md` (manifest format).
 
-```
-content/*.json ──content:import──▶ knowledge tables ──▶ REVIEW snapshot (content_snapshots, kind=review)
-                                                              │
-                     spatial:compile ◀────────────────────────┤
-                     spatial_manifests (+ element index)      │
-                                                              ▼
- request ─▶ getLearningContext(condition) ─▶ { snapshotId, manifestId, mode, ... }
-              │                                  │
-              │            read model (cached) ◀─┘   getManifest(manifestId) (cached)
-              ▼
- <TelemetryProvider> ─▶ POST /api/telemetry/batch ─▶ telemetry_batches / _events / _quarantine / sequence_gaps
+How content, a door page and its telemetry connect:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  subgraph Files["Repository files"]
+    CF["content/*.json"]
+    STP["Stage templates<br/>content/study"]
+  end
+  subgraph App["Next.js app"]
+    DOOR["Door page<br/>DoorContent"]
+    CTX["getLearningContext"]
+    RM["Read model<br/>cached per snapshot"]
+    API["POST<br/>/api/telemetry/batch"]
+  end
+  subgraph Browser
+    TP["TelemetryProvider"]
+  end
+  subgraph PG["Postgres"]
+    KT[("Knowledge tables")]
+    RS[("Review snapshot<br/>content_snapshots")]
+    TT[("telemetry_batches, _events<br/>_quarantine, sequence_gaps")]
+  end
+  CF -->|content:import| KT
+  KT -->|storeReviewSnapshot| RS
+  STP --> DOOR
+  DOOR --> CTX
+  CTX -->|picks snapshot| RS
+  DOOR -->|snapshotId| RM
+  RM -->|payload| RS
+  DOOR -->|config| TP
+  TP -->|batches| API
+  API --> TT
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  classDef gold fill:#FAEECD,stroke:#CD9200,color:#1E1B2E
+  class CTX accent
+  class KT,RS,TT gold
 ```
 
 Rule for every page: **get the learning context first, then read knowledge only by
-`ctx.snapshotId` and space only by `ctx.manifestId`.** Never query the live knowledge tables
+`ctx.snapshotId`.** Never query the live knowledge tables
 from a learning page, never pick "the latest" snapshot yourself, never trust ids from the client.
 
 ## 1. Learning context — `src/server/learning/context.ts` (server-only)
@@ -46,14 +77,39 @@ interface LearningContext {
 }
 ```
 
+How `getLearningContext` resolves a request (`context.ts`, `context-data.ts`):
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart TD
+  REQ["Door page request"] --> CTX["getLearningContext"]
+  CTX --> ACC{"requireLearningAccess"}
+  ACC -->|denied| DENY["Redirect"]
+  ACC -->|participant| STEP{"Learning step<br/>current?"}
+  STEP -->|no| BACK["Redirect to<br/>/study/session"]
+  STEP -->|yes| FS["findStudySession<br/>pinned snapshot"]
+  ACC -->|staff or demo| FP["findPreviewContent<br/>newest review snapshot"]
+  FS --> V1{"Template stages<br/>verified?"}
+  FP --> V2{"Template stages<br/>verified?"}
+  FS -.->|missing| ERR["LearningContext<br/>UnavailableError"]
+  FP -.->|none| ERR
+  V1 -->|no| ERR
+  V2 -->|no| ERR
+  V1 -->|yes| CLK["startLearningClock<br/>stamped once"]
+  CLK --> SC["Study context"]
+  V2 -->|yes| PC["Demo or preview context"]
+  ERR --> UN["LearningUnavailable"]
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  class CTX accent
+```
+
 - Access comes from the existing guard `requireLearningAccess` (participant cookie decides;
   else staff preview; else public demo). A denied request **redirects** (throws) before rendering.
-- `study`: the session's pinned snapshot and manifest (the database forces them to equal the
-  study's). `demo` / `preview`: the newest review snapshot, the manifest and traditions of the
-  demo study pinned to it (`demo-review-walkthrough`, created by `dev:bootstrap`), always
-  `nonExperimental: true`, `contentUnderReview: true`.
+- `study`: the session's pinned snapshot (the database forces it to equal the study's).
+  `demo` / `preview`: the newest review snapshot, preferring one a demo study is pinned to
+  (`demo-review-walkthrough`, created by `dev:bootstrap`), with that demo study's config.
 - Throws `LearningContextUnavailableError` (`reason`: `no_review_snapshot` | `session_not_found` |
-  `study_has_no_snapshot`) when there is nothing to show. Render a friendly message.
+  `study_has_no_snapshot` | `content_unverified`) when there is nothing to show. Render a friendly message.
 - Protocol settings are read ONLY here (`ctx.settings`, type in `src/features/learning/settings.ts`);
   no page reads `studies.config` itself. `ctx.scope.minCompareTraditions` comes from the rule set
   of the pinned manifest through the compiler's `comparisonMinTraditions` (default rule set
@@ -126,8 +182,49 @@ stale. Results are plain serialisable objects; types are exported from
 ### 4a. Ingestion — `POST /api/telemetry/batch`
 
 Route `src/app/api/telemetry/batch/route.ts`; logic `src/server/telemetry/ingest.ts`
-(`ingestTelemetryBatch(pool, principal, body, { receivedAt? })`). Body: `telemetryBatchSchema`
+(`ingestTelemetryBatch(pool, principal, body, { receivedAt? })`). Body: `telemetryBatchEnvelopeSchema`
 (header) with events validated one by one (`telemetryEventSchema`).
+
+One batch, from the tracker's outbox to the database:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+sequenceDiagram
+  autonumber
+  participant T as Tracker
+  participant O as Outbox
+  participant R as Route
+  participant P as principal.ts
+  participant L as rate-limit.ts
+  participant I as ingest.ts
+  participant D as Postgres
+  T->>O: Write each event before upload
+  T->>R: POST batch with idempotency key
+  R->>R: Size and origin checks (413, 403)
+  R->>P: resolveTelemetryPrincipal(cookies)
+  P-->>R: Participant, staff preview or demo
+  R->>L: take(principalKey)
+  L-->>R: Allowed, or 429 with Retry-After
+  R->>I: ingestTelemetryBatch
+  alt Demo or staff preview
+    I-->>R: Validated, persisted false
+  else Participant
+    I->>D: Read session (401, 410, 403)
+    I->>D: BEGIN, session lock, insert batch
+    alt Key stored, no new events
+      I-->>R: Stored outcome, replayed true
+    else New batch
+      loop Each event
+        I->>D: Insert event, or quarantine row
+      end
+      I->>D: Sequence gaps, batch counts, COMMIT
+      Note over D: At COMMIT, triggers<br/>notify ie_dashboard
+    end
+  end
+  R-->>T: 200 with counts and gaps
+  T->>O: Remove acknowledged events
+  Note over T,R: Retry on network, 408, 429, 5xx<br/>halve on 413, dead-letter the rest
+```
 
 | Status | `error` | Meaning (client action) |
 |---|---|---|
@@ -253,6 +350,27 @@ usePauseWhile(helpOpen);
   whole queue is beaconed (no loss). When the budget ends, call `tracker.timing.end("budget_ended")`.
 - Opening a citation is part of the content: it does NOT pause or end exposure.
 
+The time accountant (`timing.ts`) holds at most one open interval, and its pause state runs
+alongside it:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+stateDiagram-v2
+  state timing {
+    [*] --> idle
+    idle --> exposure: beginExposure
+    idle --> navigation: beginNavigation
+    exposure --> navigation: switched
+    navigation --> exposure: switched
+    exposure --> idle: end(reason)
+    navigation --> idle: end(reason)
+    --
+    [*] --> running
+    running --> paused: first cause
+    paused --> running: last cause clears
+  }
+```
+
 ### 4d. Citations: `CitationDisclosure` (src/components/citations)
 
 ```tsx
@@ -298,6 +416,42 @@ excluded and counted, never estimated.
 
 ### 4g. Change notifications and dashboard rollups (research dashboard)
 
+How a database change reaches an open research dashboard:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  subgraph PG["Postgres"]
+    W[("Study, session and<br/>telemetry tables")]
+    RU[("session_telemetry<br/>_rollups")]
+  end
+  subgraph Server["App server process"]
+    N["DashboardNotifier<br/>LISTEN ie_dashboard"]
+    SSE["GET /api/research/<br/>dashboard/stream"]
+    PAGE["Dashboard page<br/>page.tsx"]
+    CO["DashboardCoalescer"]
+    LD["loadDashboard"]
+    RR["refreshRollups"]
+  end
+  subgraph Browser["Researcher browser"]
+    LS["Live status<br/>EventSource"]
+  end
+  W -->|pg_notify at commit| N
+  N -->|change| SSE
+  SSE -->|change event| LS
+  LS -->|router.refresh| PAGE
+  PAGE -->|serveDashboard| CO
+  N -.->|version| CO
+  CO -->|cache miss| LD
+  LD --> RR
+  RR -->|changed sessions| RU
+  RR -->|their events| W
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  classDef gold fill:#FAEECD,stroke:#CD9200,color:#1E1B2E
+  class N accent
+  class W,RU gold
+```
+
 - **Notify triggers (migration 0014).** Statement-level `AFTER` triggers with transition tables
   on `telemetry_events` (insert, delete), `telemetry_batches`, `telemetry_quarantine`,
   `sequence_gaps`, `study_sessions`, `participants`, `derived_metrics`, `concept_maps` (insert,
@@ -325,6 +479,42 @@ excluded and counted, never estimated.
   `telemetry_batches_duplicates_idx (session_id) WHERE duplicate_count > 0`.
 
 ## 5. Content import and review snapshots
+
+Who writes the knowledge tables and the review snapshot:
+
+```mermaid
+%%{init: {"theme":"base","fontFamily":"Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif","themeVariables":{"fontSize":"15px","primaryColor":"#F2E9FE","primaryTextColor":"#1E1B2E","primaryBorderColor":"#9148D2","secondaryColor":"#FAEECD","secondaryTextColor":"#1E1B2E","secondaryBorderColor":"#CD9200","tertiaryColor":"#F3F1FA","tertiaryTextColor":"#1E1B2E","tertiaryBorderColor":"#A7A3BC","mainBkg":"#F2E9FE","nodeBorder":"#9148D2","nodeTextColor":"#1E1B2E","lineColor":"#AA69E9","textColor":"#857F9E","edgeLabelBackground":"#F9F5FF","clusterBkg":"#F9F5FF","clusterBorder":"#D6B6FB","titleColor":"#762CB1","noteBkgColor":"#FAEECD","noteTextColor":"#1E1B2E","noteBorderColor":"#CD9200","actorBkg":"#F2E9FE","actorBorder":"#9148D2","actorTextColor":"#1E1B2E","actorLineColor":"#AA69E9","signalColor":"#AA69E9","signalTextColor":"#857F9E","labelBoxBkgColor":"#F2E9FE","labelBoxBorderColor":"#9148D2","labelTextColor":"#1E1B2E","loopTextColor":"#857F9E","activationBkgColor":"#E7D5FE","activationBorderColor":"#9148D2","sequenceNumberColor":"#FFFFFF","transitionColor":"#AA69E9","transitionLabelColor":"#857F9E","stateLabelColor":"#1E1B2E","stateBkg":"#F2E9FE","compositeBackground":"#F9F5FF","compositeTitleBackground":"#F2E9FE","attributeBackgroundColorOdd":"#FFFFFF","attributeBackgroundColorEven":"#F9F5FF","relationColor":"#AA69E9","relationLabelBackground":"#F9F5FF","relationLabelColor":"#1E1B2E"}}}%%
+flowchart LR
+  subgraph Callers
+    CI["npm run<br/>content:import"]
+    BS["npm run<br/>dev:bootstrap"]
+    CMS["CMS Dataset versions<br/>rebuild review copy"]
+  end
+  subgraph PG["Postgres"]
+    KT[("Knowledge tables<br/>and audit_log")]
+    CS[("content_snapshots<br/>review, draft")]
+    DS[("Demo study<br/>no manifest")]
+  end
+  F["content/*.json"]
+  V["loadAndValidate"]
+  IC["importContent"]
+  RS["storeReviewSnapshot"]
+  F --> V
+  CI --> V
+  BS --> V
+  V -->|no error issues| IC
+  IC -->|upsert, prune| KT
+  IC -->|then| RS
+  CMS --> RS
+  KT -->|rows to model| RS
+  RS -->|new label only| CS
+  BS -.->|ensureDemoStudy| DS
+  DS -->|pinned to| CS
+  classDef accent fill:#762CB1,stroke:#5F1C93,color:#FFFFFF
+  classDef gold fill:#FAEECD,stroke:#CD9200,color:#1E1B2E
+  class IC accent
+  class KT,CS,DS gold
+```
 
 - `npm run content:import [-- --test] [-- --no-snapshot]` (`scripts/content/import.ts`; core
   `importContent(client, { model, issues, hasher })` in `src/server/content/import-content.ts`).
